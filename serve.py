@@ -1,5 +1,5 @@
 import http.server, socketserver, os
-os.chdir(os.path.join(os.path.dirname(__file__), "dist"))
+os.chdir(os.path.join(os.path.dirname(__file__), "docs"))
 class H(http.server.SimpleHTTPRequestHandler):
     def end_headers(self):
         self.send_header("Cache-Control", "no-store, max-age=0")

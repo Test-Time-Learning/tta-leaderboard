@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Build the static leaderboard dataset (``dist/data.json``).
+"""Build the static leaderboard dataset (``docs/data.json``).
 
 Scans every result JSON under ``results/``, normalizes per-seed records into
 a compact schema, and emits a single ``data.json`` consumed by ``index.html``.
@@ -17,7 +17,7 @@ from typing import Any
 REPO_ROOT = Path(__file__).resolve().parents[1]
 LEADERBOARD_ROOT = Path(__file__).resolve().parent
 DEFAULT_RESULTS = REPO_ROOT / "results"
-DEFAULT_OUT = LEADERBOARD_ROOT / "dist" / "data.json"
+DEFAULT_OUT = LEADERBOARD_ROOT / "docs" / "data.json"
 
 # Keep this in sync with leaderboard/index.html — sources of truth for catalog data.
 METHODS_CATALOG: dict[str, dict[str, str]] = {

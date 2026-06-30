@@ -1,0 +1,1084 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Test-Time Adaptation — Leaderboard</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E🏆%3C/text%3E%3C/svg%3E" />
+<meta name="description" content="A Unified, Reproducible, Ready-to-Run Benchmark for Test-Time Adaptation, covering Classification, Segmentation, and Detection with comprehensive Effectiveness and Efficiency evaluation." />
+<link rel="stylesheet" href="bootstrap.min.css">
+<style>
+  /* ── Cyber-Classical theme (shared with the Awesome Test-Time Adaptation site) ── */
+  :root{
+    --ink:#12152a; --ink2:#1e2442; --paper:#f4f1e8; --card:#fbfaf5;
+    --line:#e4ddca; --accent:#13b3a8; --accent2:#c2902f; --text:#22252f; --muted:#7b7666;
+  }
+  body{ background:var(--paper); color:var(--text);
+        font-family:"Iowan Old Style","Palatino Linotype",Palatino,"Book Antiqua",Georgia,"Times New Roman",serif; }
+  .serif,h1,h2,h3,.h3,.h5,.h6,table.tbl thead th{
+    font-family:"Iowan Old Style","Palatino Linotype",Palatino,"Book Antiqua",Georgia,"Times New Roman",serif;
+  }
+  /* header: dark ink with a neon classical rule */
+  .hero{ position:relative;
+         background:radial-gradient(circle at 18% 0%, #232a52 0%, transparent 55%),
+                    linear-gradient(135deg,#10132a 0%,#1b2140 100%);
+         border-bottom:2px solid transparent;
+         border-image:linear-gradient(90deg,var(--accent),var(--accent2)) 1; }
+  .gh-corner{ position:absolute; top:.9rem; right:1.1rem; z-index:2;
+    display:inline-flex; align-items:center; gap:.35rem; padding:.3rem .7rem;
+    font-size:.82rem; text-decoration:none; border-radius:.4rem;
+    color:#cfeae6; border:1px solid #46506f; background:rgba(255,255,255,.04); }
+  .gh-corner:hover{ background:#46506f; color:#fff; border-color:#6b76a0; }
+  .hero h1{ color:#efe7d0; letter-spacing:.05em; text-shadow:0 1px 0 rgba(0,0,0,.4); }
+  .hero-motto{ display:inline-block; font-style:italic; font-size:1.12rem; color:#e7dcc0;
+    letter-spacing:.015em; margin-bottom:.35rem; }
+  .hero p,.hero .text-secondary{ color:#b7b2c8 !important; }
+  .hero .mono{ color:#7fe3da; }
+  .meta-link{ color:#7fe3da; text-decoration:none; }
+  .meta-link:hover{ text-decoration:underline; color:#a6f0e8; }
+  .hero .btn-outline-secondary{ color:#cfeae6; border-color:#46506f; }
+  .hero .btn-outline-secondary:hover{ background:#46506f; color:#fff; }
+  /* tabs */
+  .nav-cc .nav-link{ cursor:pointer; color:#9aa; border:1px solid transparent; border-radius:.4rem;
+    font-family:"Iowan Old Style",Palatino,Georgia,serif; letter-spacing:.04em; padding:.3rem .9rem; }
+  .nav-cc .nav-link.active{ background:rgba(19,179,168,.14); color:#7fe3da; border-color:rgba(19,179,168,.5); }
+  /* cards / inputs */
+  .card{ background:var(--card); border:1px solid var(--line); box-shadow:0 1px 2px rgba(20,18,40,.04); }
+  /* table */
+  table.tbl{ font-size:.875rem; }
+  table.tbl thead th{ background:#ece4d0; color:#3b3650; font-size:.86rem; text-transform:uppercase;
+    letter-spacing:.07em; white-space:nowrap; border-bottom:1px solid var(--line); }
+  .tbl-wrap{ overflow-x:auto; }
+  /* pills as terminal-ish chips */
+  .pill{ font-size:.72rem; font-weight:600; padding:.16rem .55rem; border-radius:.35rem; display:inline-block;
+    line-height:1.3; font-family:ui-monospace,SFMono-Regular,Menlo,monospace; border:1px solid rgba(0,0,0,.07); }
+  .pill-gray{ background:#eceadf; color:#5b5648; }
+  .pill-indigo{ background:#dde8ff; color:#1b46c8; }
+  .pill-teal{ background:#cdeee9; color:#0c7a70; }
+  .pill-conf{ background:#dde8ff; color:#1b46c8; }
+  .pill-journal{ background:#d3f0dd; color:#0e7440; }
+  .pill-other{ background:#eceadf; color:#5a6470; }
+  .pill-oral{ background:#fbdede; color:#bb2d2d; }
+  .pill-spotlight{ background:#fbeec2; color:#8a6400; }
+  a.pill{ text-decoration:none; cursor:pointer; }
+  a.pill:hover{ filter:brightness(0.95); }
+  /* About → Tasks·Benchmarks·Source-Models grid: even pill spacing + task bands */
+  .about-grid td{ vertical-align:middle; }
+  .about-grid td:last-child{ display:flex; flex-wrap:wrap; gap:.3rem; }
+  .about-grid tbody tr:not(:last-child) > td{ border-bottom:1px solid var(--line); }
+  /* About → per-card EN/中文 language toggle */
+  .langcard .lang-zh{ display:none; }
+  .langcard.show-zh .lang-en{ display:none; }
+  .langcard.show-zh .lang-zh{ display:block; }
+  .mono{ font-variant-numeric:tabular-nums; font-family:ui-monospace,SFMono-Regular,Menlo,monospace; }
+  .paper-link{ font-weight:500; text-decoration:none; color:#0e7c73; }
+  .paper-link:hover{ text-decoration:underline; }
+  .lnk{ font-size:.78rem; text-decoration:none; white-space:nowrap; color:#1b46c8; }
+  .lnk:hover{ text-decoration:underline; }
+  .author-lnk{ color:#0e7c73; text-decoration:none; cursor:pointer; }
+  .author-lnk:hover{ text-decoration:underline; }
+  .bib-mark{ font-size:.72em; font-weight:600; color:#0e7c73; text-decoration:none; vertical-align:super; margin-left:.06em; cursor:pointer; }
+  .bib-mark:hover{ text-decoration:underline; }
+  .bib-overlay{ position:fixed; inset:0; background:rgba(10,12,25,.55); display:flex; align-items:center; justify-content:center; z-index:1080; }
+  .bib-modal{ background:var(--card); border:1px solid var(--line); border-radius:.5rem; padding:1rem 1.25rem; width:min(640px,92vw); box-shadow:0 12px 44px rgba(10,12,25,.4); }
+  /* ── leaderboard-specific (medals · sortable headers · ranked rows · bars) ── */
+  .medal{ font-size:1rem; }
+  th.sortable{ cursor:pointer; user-select:none; }
+  th.sortable:hover{ background:#e2d9c3; }
+  .arrow{ opacity:.35; font-size:.7rem; }
+  .arrow.on{ opacity:1; color:var(--accent2); }
+  .row-gold{ background:#fbf3d8 !important; }
+  .row-silver{ background:#edeae0 !important; }
+  .row-bronze{ background:#f6e7d2 !important; }
+  .best-cell{ background:#cdeee9; color:#0c7a70; font-weight:700; }
+  .bar-bg{ background:#e7e1d0; height:8px; border-radius:.3rem; overflow:hidden; }
+  .bar{ height:8px; border-radius:.3rem; background:linear-gradient(90deg,var(--accent),var(--accent2)); }
+  /* details tab — two-zone drag picker */
+  #de-picker .de-mitem{ display:inline-flex; align-items:center; gap:.35rem; padding:.14rem .55rem;
+    border:1px solid var(--line); border-radius:.45rem; background:#fbfaf5; cursor:grab; user-select:none; font-size:.82rem; }
+  #de-picker .de-mitem:active{ cursor:grabbing; }
+  #de-picker .de-mitem.dragging{ opacity:.4; border-style:dashed; }
+  #de-picker .de-drag{ color:#b3ab95; font-size:.85rem; line-height:1; }
+  #de-picker .de-merr{ color:#9a9483; font-size:.72rem; font-variant-numeric:tabular-nums; }
+  .de-zone{ display:flex; flex-wrap:wrap; gap:.4rem; align-content:flex-start; min-height:2.6rem;
+    padding:.5rem; border:1px dashed var(--line); border-radius:.5rem; background:#fcfbf6; }
+  .de-zone:empty::before{ content:attr(data-empty); color:#b3ab95; font-style:italic; font-size:.8rem; }
+  .de-zone.dragover{ border-color:var(--accent); background:#eefaf8; }
+  #de-chosen{ background:#edf7ee; border-color:#bfe0c4; }
+  .de-divider{ display:flex; align-items:center; gap:.6rem; margin:.55rem 0; color:#9a9483;
+    font-size:.72rem; text-transform:uppercase; letter-spacing:.08em; white-space:nowrap; }
+  .de-divider::before,.de-divider::after{ content:''; flex:1; border-top:1px solid var(--line); }
+  /* compact std subscript so std-mode still fits one page */
+  .de-std-sub{ font-size:.66em; font-weight:400; color:#8a8676; margin-left:.08em; }
+  #tab-details table.tbl thead th.dcol{ text-transform:none; letter-spacing:.02em; }
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <a class="gh-corner" href="https://github.com/Test-Time-Learning/tta-leadboard" target="_blank" rel="noopener" aria-label="GitHub repository" title="View source on GitHub">
+    <svg height="16" width="16" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"></path></svg>
+    GitHub
+  </a>
+  <div class="container py-4 text-center">
+    <h1 class="fw-bold mb-1" style="font-size:2.6rem">🏆 Test-Time Adaptation Leaderboard</h1>
+    <p class="mb-2 mx-auto" style="max-width:880px">
+      <span class="hero-motto">The world keeps changing, so should the model.</span><br>
+      <span class="d-inline-block mt-3 px-4 py-2" style="font-size:.9rem;line-height:1.6;color:#cfd0e0;
+            border:1px solid rgba(19,179,168,.55);border-radius:.6rem;background:rgba(19,179,168,.08);max-width:820px">
+        A <strong style="color:#7fe3da">Unified</strong>, <strong style="color:#7fe3da">Reproducible</strong>, <strong style="color:#7fe3da">Ready-to-Run</strong> Benchmark for Test-Time Adaptation,<br>
+        covering <strong style="color:#7fe3da">Classification</strong>, <strong style="color:#7fe3da">Segmentation</strong>, and <strong style="color:#7fe3da">Detection</strong>
+        with comprehensive <strong style="color:#7fe3da">Effectiveness</strong> and <strong style="color:#7fe3da">Efficiency</strong> evaluation.</span>
+    </p>
+    <ul class="nav nav-cc justify-content-center gap-2 mt-3" id="tabs">
+      <li class="nav-item"><a class="nav-link active" data-tab="arena">🏆 Leaderboard</a></li>
+      <li class="nav-item"><a class="nav-link" data-tab="details">📊 Comparison</a></li>
+      <li class="nav-item"><a class="nav-link" data-tab="about">🗺️ About</a></li>
+      <li class="nav-item"><a class="nav-link" href="https://test-time.cc/adaptation/#list" target="_blank" rel="noopener">📄 Back to Paper List&nbsp;↗</a></li>
+    </ul>
+  </div>
+</header>
+
+<main class="container py-4">
+
+  <!-- ============ ARENA ============ -->
+  <section id="tab-arena">
+    <!-- filters -->
+    <div class="card shadow-sm mb-3">
+      <div class="card-body">
+        <div class="row g-2">
+          <div class="col-6 col-md-3">
+            <label class="form-label small text-secondary mb-1">Task</label>
+            <select id="a-task" class="form-select form-select-sm"></select>
+          </div>
+          <div class="col-6 col-md-3">
+            <label class="form-label small text-secondary mb-1">Dataset</label>
+            <select id="a-dataset" class="form-select form-select-sm"></select>
+          </div>
+          <div class="col-6 col-md-3">
+            <label class="form-label small text-secondary mb-1">Setting (Protocol)</label>
+            <select id="a-shift" class="form-select form-select-sm"></select>
+          </div>
+          <div class="col-6 col-md-3">
+            <label class="form-label small text-secondary mb-1">Source model</label>
+            <select id="a-source" class="form-select form-select-sm"></select>
+          </div>
+        </div>
+        <div class="form-check form-check-inline mt-2">
+          <input class="form-check-input" type="checkbox" id="a-runtime" checked>
+          <label class="form-check-label small" for="a-runtime">Runtime / Memory / Params Columns</label>
+        </div>
+      </div>
+    </div>
+    <!-- leaderboard -->
+    <h2 class="h6 fw-semibold mb-2">🏆 Leaderboard</h2>
+    <div class="card shadow-sm mb-4">
+      <div class="tbl-wrap">
+        <table class="table table-hover mb-0 tbl">
+          <thead id="a-head"></thead>
+          <tbody id="a-body"></tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ DETAILS ============ -->
+  <section id="tab-details" class="d-none">
+    <!-- filters -->
+    <div class="card shadow-sm mb-3">
+      <div class="card-body">
+        <div class="row g-2">
+          <div class="col-6 col-md-3">
+            <label class="form-label small text-secondary mb-1">Task</label>
+            <select id="de-task" class="form-select form-select-sm"></select>
+          </div>
+          <div class="col-6 col-md-3">
+            <label class="form-label small text-secondary mb-1">Dataset</label>
+            <select id="de-dataset" class="form-select form-select-sm"></select>
+          </div>
+          <div class="col-6 col-md-3">
+            <label class="form-label small text-secondary mb-1">Setting (Protocol)</label>
+            <select id="de-shift" class="form-select form-select-sm"></select>
+          </div>
+          <div class="col-6 col-md-3">
+            <label class="form-label small text-secondary mb-1">Source model</label>
+            <select id="de-source" class="form-select form-select-sm"></select>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- configure panel -->
+    <div class="card shadow-sm mb-3">
+      <div class="card-body py-2">
+        <div class="small fw-semibold mb-2">Configure Panel</div>
+
+        <!-- 1 · select methods -->
+        <div class="d-flex align-items-center gap-2 mb-2 flex-nowrap small overflow-auto">
+          <span class="fw-semibold text-secondary text-nowrap">1 · Select methods</span>
+          <span class="text-secondary text-nowrap">drag to add/remove · reorder within <em>Selected</em></span>
+          <button id="de-all" class="btn btn-sm btn-link p-0 text-nowrap">Select all</button>
+          <span class="text-secondary">·</span>
+          <button id="de-none" class="btn btn-sm btn-link p-0 text-nowrap">Clear</button>
+          <span class="text-secondary">·</span>
+          <button id="de-top" class="btn btn-sm btn-link p-0 text-nowrap">Top 10</button>
+          <span id="de-mcount" class="text-secondary ms-1 text-nowrap"></span>
+        </div>
+        <div id="de-picker">
+          <div class="de-zone" id="de-pool" data-empty="(all methods selected — drag one up to set it aside)"></div>
+          <div class="de-divider">selected ↓ &nbsp;·&nbsp; table &amp; export order</div>
+          <div class="de-zone" id="de-chosen" data-empty="Drag methods here to compare"></div>
+        </div>
+
+        <hr class="my-2">
+
+        <!-- 2 · display -->
+        <div class="d-flex align-items-center gap-3 flex-wrap">
+          <span class="small fw-semibold text-secondary">2 · Display</span>
+          <div class="form-check form-check-inline mb-0">
+            <input class="form-check-input" type="checkbox" id="de-std">
+            <label class="form-check-label small" for="de-std">Show ± std</label>
+          </div>
+          <div class="form-check form-check-inline mb-0">
+            <input class="form-check-input" type="checkbox" id="de-cite" checked>
+            <label class="form-check-label small" for="de-cite">LaTeX <span class="mono">\cite{}</span></label>
+          </div>
+        </div>
+
+        <hr class="my-2">
+
+        <!-- 3 · export -->
+        <div class="d-flex align-items-center gap-3 flex-wrap">
+          <span class="small fw-semibold text-secondary">3 · Export</span>
+          <button id="de-csv" class="btn btn-sm btn-outline-secondary">⬇ Copy CSV</button>
+          <button id="de-latex" class="btn btn-sm btn-outline-secondary">⧉ Export LaTeX</button>
+          <button id="de-bib" class="btn btn-sm btn-outline-secondary">⧉ Export BibTeX</button>
+        </div>
+      </div>
+    </div>
+    <!-- table -->
+    <h2 class="h6 fw-semibold mb-2">🌐 Per-domain details
+      <span id="de-caption" class="text-secondary small">(per corruption · best <strong>bold</strong>)</span></h2>
+    <div class="card shadow-sm">
+      <div class="tbl-wrap">
+        <table class="table table-hover mb-0 tbl">
+          <thead id="de-head"></thead>
+          <tbody id="de-body"></tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ ABOUT ============ -->
+  <section id="tab-about" class="d-none">
+    <div class="card shadow-sm mb-3 langcard"><div class="card-body">
+      <div class="d-flex justify-content-between align-items-start mb-2 gap-2">
+        <h2 class="h5 fw-bold mb-0 lang-en">🗺️ About this Leaderboard</h2>
+        <h2 class="h5 fw-bold mb-0 lang-zh">🗺️ 关于本排行榜</h2>
+        <div class="btn-group btn-group-sm langtoggle" role="group" aria-label="Language">
+          <button type="button" class="btn btn-outline-secondary active" data-lang="en">EN</button>
+          <button type="button" class="btn btn-outline-secondary" data-lang="zh">中文</button>
+        </div>
+      </div>
+      <div class="lang-en">
+        <p class="mb-2">This is a unified <strong>Test-Time Adaptation (TTA)</strong> leaderboard spanning three tasks: <strong>Classification</strong>, <strong>Segmentation</strong>, and <strong>Detection</strong>. It reports both performance and efficiency across a range of models, settings, and datasets.</p>
+        <p class="mb-2">All methods are evaluated under one shared code framework. Performance is averaged over <strong>5 random seeds</strong>, and efficiency is measured on a single <strong>RTX 4090</strong>. Source models and shift benchmarks are pinned to fixed models and datasets on the Hugging Face Hub.</p>
+        <p class="mb-0 text-secondary small">Metrics by task: Classification uses <strong>Error&nbsp;%</strong> (lower is better), Segmentation uses <strong>mIoU&nbsp;%</strong> (higher is better), and Detection uses <strong>mAP</strong> (higher is better).</p>
+      </div>
+      <div class="lang-zh">
+        <p class="mb-2">这是一个统一评测<strong>分类</strong>、<strong>分割</strong>、<strong>检测</strong>三类任务的<strong>测试时自适应（Test-Time Adaptation, TTA）</strong>排行榜，在不同模型、实验设置与数据集下报告性能与效率。</p>
+        <p class="mb-2">所有方法均在统一代码框架下评测，性能为 <strong>5 个随机种子</strong>重复运行后取平均，效率在单卡 <strong>RTX 4090</strong> 上测量。源模型与偏移基准均固定为 Hugging Face 上指定的模型与数据集。</p>
+        <p class="mb-0 text-secondary small">各任务指标：分类用 <strong>Error&nbsp;%</strong>（越低越好），分割用 <strong>mIoU&nbsp;%</strong>（越高越好），检测用 <strong>mAP</strong>（越高越好）。</p>
+      </div>
+    </div></div>
+
+    <div class="card shadow-sm mb-3 langcard"><div class="card-body">
+      <div class="d-flex justify-content-between align-items-start mb-2 gap-2">
+        <h2 class="h6 fw-semibold mb-0 lang-en">Tasks · Benchmarks · Source Models</h2>
+        <h2 class="h6 fw-semibold mb-0 lang-zh">任务 · 基准 · 源模型</h2>
+        <div class="btn-group btn-group-sm langtoggle" role="group" aria-label="Language">
+          <button type="button" class="btn btn-outline-secondary active" data-lang="en">EN</button>
+          <button type="button" class="btn btn-outline-secondary" data-lang="zh">中文</button>
+        </div>
+      </div>
+      <p class="small text-secondary mb-3 lang-en">The shift benchmarks apply the 15 ImageNet-C-style corruptions at severity&nbsp;5. All assets are hosted under the <a href="https://huggingface.co/WNJXYK" target="_blank" rel="noopener">WNJXYK</a> Hugging&nbsp;Face org. Click any pill to open it.</p>
+      <p class="small text-secondary mb-3 lang-zh">偏移基准采用 15 种 ImageNet-C 风格的损坏（Severity&nbsp;5）。所有资源均托管于 <a href="https://huggingface.co/WNJXYK" target="_blank" rel="noopener">WNJXYK</a> Hugging&nbsp;Face 组织下，点击任意标签即可打开。</p>
+      <div class="table-responsive">
+      <table class="table table-sm align-middle mb-0 about-grid">
+        <thead><tr class="small text-uppercase text-secondary">
+          <th style="width:9.5rem">Task</th><th style="width:8rem">Metric</th><th>Benchmark</th><th>Source models</th></tr></thead>
+        <tbody class="small">
+          <tr>
+            <td rowspan="3" class="fw-semibold align-middle">🏷️ Classification</td>
+            <td rowspan="3" class="align-middle"><span class="pill pill-gray">Error&nbsp;% ↓</span></td>
+            <td><a class="pill pill-teal" href="https://huggingface.co/datasets/WNJXYK/TTA-CIFAR-10-C" target="_blank" rel="noopener">CIFAR-10-C</a></td>
+            <td><a class="pill pill-gray" href="https://huggingface.co/WNJXYK/TTA-CIFAR-10-WRN28-10" target="_blank" rel="noopener">WRN-28-10</a> <a class="pill pill-gray" href="https://huggingface.co/WNJXYK/TTA-CIFAR-10-AugMix-WRN40" target="_blank" rel="noopener">AugMix-WRN-40-2</a> <a class="pill pill-gray" href="https://huggingface.co/WNJXYK/TTA-CIFAR-10-ShuffleNetV2" target="_blank" rel="noopener">ShuffleNetV2</a> <a class="pill pill-gray" href="https://huggingface.co/WNJXYK/TTA-CIFAR-10-ViT-B16" target="_blank" rel="noopener">ViT-B/16</a></td>
+          </tr>
+          <tr>
+            <td><a class="pill pill-teal" href="https://huggingface.co/datasets/WNJXYK/TTA-CIFAR-100-C" target="_blank" rel="noopener">CIFAR-100-C</a></td>
+            <td><a class="pill pill-gray" href="https://huggingface.co/WNJXYK/TTA-CIFAR-100-ResNeXt29" target="_blank" rel="noopener">ResNeXt-29</a> <a class="pill pill-gray" href="https://huggingface.co/WNJXYK/TTA-CIFAR-100-AugMix-WRN40" target="_blank" rel="noopener">AugMix-WRN-40-2</a> <a class="pill pill-gray" href="https://huggingface.co/WNJXYK/TTA-CIFAR-100-ShuffleNetV2" target="_blank" rel="noopener">ShuffleNetV2</a> <a class="pill pill-gray" href="https://huggingface.co/WNJXYK/TTA-CIFAR-100-ViT-B16" target="_blank" rel="noopener">ViT-B/16</a></td>
+          </tr>
+          <tr>
+            <td><a class="pill pill-teal" href="https://huggingface.co/datasets/WNJXYK/TTA-ImageNet-C" target="_blank" rel="noopener">ImageNet-C</a></td>
+            <td><a class="pill pill-gray" href="https://huggingface.co/WNJXYK/TTA-ImageNet-ResNet50" target="_blank" rel="noopener">ResNet-50</a> <a class="pill pill-gray" href="https://huggingface.co/WNJXYK/TTA-ImageNet-ResNet18" target="_blank" rel="noopener">ResNet-18</a> <a class="pill pill-gray" href="https://huggingface.co/WNJXYK/TTA-ImageNet-ConvNeXt-T" target="_blank" rel="noopener">ConvNeXt-T</a> <a class="pill pill-gray" href="https://huggingface.co/WNJXYK/TTA-ImageNet-ViT-B16" target="_blank" rel="noopener">ViT-B/16</a></td>
+          </tr>
+          <tr>
+            <td rowspan="2" class="fw-semibold align-middle">🖼️ Segmentation</td>
+            <td rowspan="2" class="align-middle"><span class="pill pill-gray">mIoU&nbsp;% ↑</span></td>
+            <td><a class="pill pill-teal" href="https://huggingface.co/datasets/WNJXYK/TTA-Cityscapes-C" target="_blank" rel="noopener">Cityscapes-C</a></td>
+            <td><a class="pill pill-gray" href="https://huggingface.co/WNJXYK/TTA-Cityscapes-SegFormer-B5" target="_blank" rel="noopener">SegFormer-B5</a></td>
+          </tr>
+          <tr>
+            <td><a class="pill pill-teal" href="https://huggingface.co/datasets/WNJXYK/TTA-ADE20K-C" target="_blank" rel="noopener">ADE20K-C</a></td>
+            <td><a class="pill pill-gray" href="https://huggingface.co/WNJXYK/TTA-ADE20K-SegFormer-B5" target="_blank" rel="noopener">SegFormer-B5</a></td>
+          </tr>
+          <tr>
+            <td class="fw-semibold align-middle">🎯 Detection</td>
+            <td class="align-middle"><span class="pill pill-gray">mAP ↑</span></td>
+            <td><a class="pill pill-teal" href="https://huggingface.co/datasets/WNJXYK/TTA-COCO-C" target="_blank" rel="noopener">COCO-C</a></td>
+            <td><a class="pill pill-gray" href="https://huggingface.co/WNJXYK/TTA-COCO-DETR-R50" target="_blank" rel="noopener">DETR-R50</a> <a class="pill pill-gray" href="https://huggingface.co/WNJXYK/TTA-COCO-FasterRCNN-R50" target="_blank" rel="noopener">Faster R-CNN R50-FPN</a></td>
+          </tr>
+        </tbody>
+      </table>
+      </div>
+    </div></div>
+
+    <div class="card shadow-sm mb-3 langcard"><div class="card-body">
+      <div class="d-flex justify-content-between align-items-start mb-2 gap-2">
+        <h2 class="h6 fw-semibold mb-0 lang-en">Protocols &amp; Efficiency</h2>
+        <h2 class="h6 fw-semibold mb-0 lang-zh">协议与效率</h2>
+        <div class="btn-group btn-group-sm langtoggle" role="group" aria-label="Language">
+          <button type="button" class="btn btn-outline-secondary active" data-lang="en">EN</button>
+          <button type="button" class="btn btn-outline-secondary" data-lang="zh">中文</button>
+        </div>
+      </div>
+
+      <!-- English -->
+      <div class="lang-en">
+        <p class="mb-1 small"><strong>Protocols</strong> define the characteristics of the test stream. Switch between them with the Leaderboard's <em>Setting</em> selector.</p>
+        <ul class="small mb-2 ps-3">
+          <li><strong>Online.</strong> Each shift is streamed on its own as an i.i.d. sequence, and the method is reset to the source model before every shift (episodic). The classic single-domain TTA setting; it measures how the method adapts under each individual shift.</li>
+          <li><strong>Continual.</strong> The 15 shifts are streamed back-to-back with <em>no reset</em> in between, so adaptation error can accumulate. This tests the method under continuously changing conditions.</li>
+          <li><strong>Dirichlet (non-i.i.d.).</strong> The stream's labels are sampled from a Dirichlet(&alpha;) class prior, producing temporally correlated, class-imbalanced batches, so the stream is no longer i.i.d. This tests the method in open, non-stationary environments.</li>
+        </ul>
+        <p class="mb-1 small"><strong>Per-task defaults</strong></p>
+        <ul class="small mb-2 ps-3">
+          <li><strong>Classification</strong>: Online · Continual · Dirichlet (&alpha; controls the skew)</li>
+          <li><strong>Segmentation</strong>: Continual, one image per step (batch&nbsp;size&nbsp;=&nbsp;1)</li>
+          <li><strong>Detection</strong>: Online, one image per step (batch&nbsp;size&nbsp;=&nbsp;1)</li>
+        </ul>
+        <p class="mb-1 small"><strong>Efficiency</strong> is measured for every method in isolation on a single <strong>RTX&nbsp;4090</strong>. Select the <em>Runtime / Memory / Params Columns</em> in the Leaderboard to show:</p>
+        <ul class="small mb-0 ps-3">
+          <li><strong>Throughput</strong> (samples/s): end-to-end adaptation and inference rate over the stream.</li>
+          <li><strong>Adapter time</strong> (s/batch): wall-clock spent inside the adapter per batch, measured with CUDA synchronisation on both sides; source-model preprocessing is excluded.</li>
+          <li><strong>Peak GPU memory</strong> (MiB): peak allocation including the source-model weights, reset per seed so it reflects this setup's true footprint.</li>
+          <li><strong>Updated params</strong>: the number of parameters the method actually trains at test time, a proxy for adaptation overhead.</li>
+        </ul>
+      </div>
+
+      <!-- 中文 -->
+      <div class="lang-zh">
+        <p class="mb-1 small"><strong>问题设置 / 评估协议</strong>定义了测试数据流的特性，可通过排行榜中的 <em>Setting</em> 选择器切换。</p>
+        <ul class="small mb-2 ps-3">
+          <li><strong>Online（在线适应）。</strong>每种偏移单独作为一个独立同分布的序列输入，且在每种偏移开始前将方法重置回源模型（episodic）。这是经典的测试时适应单域设定，考察算法在单一偏移下的适应行为。</li>
+          <li><strong>Continual（持续适应）。</strong>15 种偏移首尾相接、连续测试，期间<em>模型不重置</em>，因此适配误差会不断累积。此设置考察算法在连续变化情形下的表现。</li>
+          <li><strong>Dirichlet（非独立同分布适应）。</strong>数据流的标签按 Dirichlet(&alpha;) 类先验采样，产生时间上相关、类别不均衡的批次，数据流不再符合独立同分布特性。此设置考察算法在开放环境下的表现。</li>
+        </ul>
+        <p class="mb-1 small"><strong>各任务默认设定</strong></p>
+        <ul class="small mb-2 ps-3">
+          <li><strong>分类任务</strong>：Online · Continual · Dirichlet（&alpha; 控制偏斜程度）</li>
+          <li><strong>分割任务</strong>：Continual，每步一张图（Batch&nbsp;Size&nbsp;=&nbsp;1）</li>
+          <li><strong>检测任务</strong>：Online，每步一张图（Batch&nbsp;Size&nbsp;=&nbsp;1）</li>
+        </ul>
+        <p class="mb-1 small"><strong>效率（Efficiency）</strong>对每个方法统一在单块 <strong>RTX&nbsp;4090</strong> 上隔离测量。在排行榜中选中 <em>Runtime / Memory / Params Columns</em> 可显示：</p>
+        <ul class="small mb-0 ps-3">
+          <li><strong>吞吐量</strong>（samples/s）：数据流上端到端的适配与推理速率。</li>
+          <li><strong>适配耗时</strong>（s/batch）：每个批次在适配器内部花费的墙钟时间，两侧均做 CUDA 同步测量，不含源模型预处理时间。</li>
+          <li><strong>峰值显存</strong>（MiB）：包含源模型权重的峰值占用，每个随机种子前重置，以反映该配置的真实占用。</li>
+          <li><strong>更新参数量</strong>：方法在测试时实际训练的参数数量，作为适配开销的代理指标。</li>
+        </ul>
+      </div>
+    </div></div>
+
+    <div class="card shadow-sm langcard"><div class="card-body">
+      <div class="d-flex justify-content-between align-items-start mb-2 gap-2">
+        <h2 class="h6 fw-semibold mb-0 lang-en">Code &amp; Reproduce</h2>
+        <h2 class="h6 fw-semibold mb-0 lang-zh">代码与复现</h2>
+        <div class="btn-group btn-group-sm langtoggle" role="group" aria-label="Language">
+          <button type="button" class="btn btn-outline-secondary active" data-lang="en">EN</button>
+          <button type="button" class="btn btn-outline-secondary" data-lang="zh">中文</button>
+        </div>
+      </div>
+      <p class="mb-2 small lang-en">Built on <code>ttakit</code>: the package is both a five-line library (<code>TTA.wrap(model, adapter=...)</code>) for quickly implementing TTA methods, and a YAML-driven framework for reproducing them. To reproduce any result:</p>
+      <p class="mb-2 small lang-zh">基于 <code>ttakit</code> 构建：此工具包既是一个五行代码即可调用的库（<code>TTA.wrap(model, adapter=...)</code>），用于快速实现不同测试时适应算法；也是一个由 YAML 配置驱动的复现框架，用于复现各类方法。复现任意结果的命令如下：</p>
+      <pre class="small mb-2" style="background:#f4f3ec;border:1px solid var(--line);border-radius:.4rem;padding:.6rem .8rem;overflow:auto"><code>uv run ttakit run --config configs/reproductions/&lt;method&gt;_&lt;dataset&gt;_&lt;protocol&gt;.yaml</code></pre>
+      <p class="mb-0 small lang-en">📦 Code: <span class="text-secondary">TBD</span> &nbsp;·&nbsp; 🤗 Models &amp; data: <a href="https://huggingface.co/WNJXYK" target="_blank" rel="noopener">huggingface.co/WNJXYK</a></p>
+      <p class="mb-0 small lang-zh">📦 代码：<span class="text-secondary">TBD</span> &nbsp;·&nbsp; 🤗 模型与数据：<a href="https://huggingface.co/WNJXYK" target="_blank" rel="noopener">huggingface.co/WNJXYK</a></p>
+    </div></div>
+  </section>
+
+</main>
+
+<footer class="container text-center text-secondary small py-4 border-top">
+  Test-Time Adaptation Leaderboard · Page Designed by <a href="https://zhouz.dev" target="_blank" rel="noopener">Zhi Zhou</a>
+</footer>
+
+<!-- Export (LaTeX / CSV) modal -->
+<div id="exp-overlay" class="bib-overlay" style="display:none">
+  <div class="bib-modal" style="width:min(880px,95vw)">
+    <div class="d-flex justify-content-between align-items-center mb-2">
+      <strong id="exp-title" class="small"></strong>
+      <button id="exp-close" class="btn-close" aria-label="Close"></button>
+    </div>
+    <textarea id="exp-text" class="form-control mono" rows="16" readonly style="font-size:.72rem; white-space:pre;"></textarea>
+    <div class="d-flex justify-content-end gap-2 mt-2">
+      <button id="exp-copy" class="btn btn-sm btn-primary">Copy</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  "use strict";
+  const $ = id => document.getElementById(id);
+  const uniq = a => Array.from(new Set(a.filter(v => v!=null && v!==''))).sort();
+  const mean = a => a.length ? a.reduce((s,v)=>s+v,0)/a.length : null;
+  const std = a => { if(a.length<2) return 0; const m=mean(a); return Math.sqrt(a.reduce((s,v)=>s+(v-m)**2,0)/a.length); };
+  // --- model-axis: pretty labels + size ordering for source models ---
+  const ALL_MODELS = '(all models)';
+  const MODEL_META = {
+    'shufflenetv2':['ShuffleNetV2',0.35], 'augmix-wrn40':['WRN-40-2',2.2],
+    'wrn-28-10':['WRN-28-10',36.5], 'resnext29':['ResNeXt-29',6.9],
+    'vit-b16':['ViT-B/16',86], 'vit-s16':['ViT-S/16',22],
+    'resnet18':['ResNet-18',12], 'resnet50':['ResNet-50',26], 'resnet101':['ResNet-101',45],
+    'resnet20':['ResNet-20',0.27], 'resnet56':['ResNet-56',0.86],
+    'mobilenetv2':['MobileNetV2',2.3], 'repvgg-a2':['RepVGG-A2',27], 'convnext-tiny':['ConvNeXt-T',28],
+    // detection detector families (COCO) — the "Source model" axis doubles as a detector selector
+    'detr-r50-coco':['DETR-R50',41], 'frcnn-r50-coco':['Faster R-CNN R50-FPN',42],
+  };
+  const modelKey = raw => String(raw||'').replace(/-(cifar10|cifar100|imagenet)$/,'');
+  const modelMeta = raw => MODEL_META[modelKey(raw)] || null;
+  const modelLabel = raw => {
+    if(!raw || raw===ALL_MODELS || raw==='(none)' || raw==='(all)') return raw;
+    const m = modelMeta(raw); return m ? `${m[0]} (${m[1]}M)` : raw;
+  };
+  const modelSize = raw => { const m=modelMeta(raw); return m ? m[1] : 1e9; };
+  // source-model option lists ordered small -> large by parameter count
+  const sourcesBySize = arr => uniq(arr).sort((x,y)=>modelSize(x)-modelSize(y) || String(x).localeCompare(String(y)));
+  // the model each dataset's TTA literature most commonly evaluates on — the
+  // default selection (NOT the smallest). RobustBench Standard WRN-28-10 for
+  // CIFAR-10-C, AugMix-ResNeXt-29 for CIFAR-100-C, ResNet-50 for ImageNet-C.
+  const LIT_DEFAULT = { 'CIFAR-10-C':'wrn-28-10', 'CIFAR-100-C':'resnext29', 'ImageNet-C':'resnet50', 'COCO-C':'detr-r50-coco' };
+  const litDefaultSource = (dataset, sources) => {
+    const fam = LIT_DEFAULT[dataset];
+    const hit = fam && sources.find(s => modelKey(s) === fam);
+    return hit || sources[0] || '';
+  };
+  const esc = s => String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  function fmtMS(m,s,d=2){ if(m==null||isNaN(m)) return '—'; const M=d===0?Math.round(m).toLocaleString():m.toFixed(d);
+    if(s==null||isNaN(s)||s===0) return M; const S=d===0?Math.round(s).toLocaleString():s.toFixed(d); return M+' ± '+S; }
+  // compact integer with K/M/B suffix, e.g. 11176090 → "11.2M", 282144 → "282K"
+  function fmtSI(n){ if(n==null||isNaN(n)) return '—'; const a=Math.abs(n);
+    if(a<1000) return String(n);
+    for(const [u,v] of [['B',1e9],['M',1e6],['K',1e3]]){ if(a>=v){ const x=n/v;
+      return (Math.abs(x)>=100?x.toFixed(0):Math.abs(x)>=10?x.toFixed(1):x.toFixed(2))+u; } }
+    return String(n); }
+
+  const A = {
+    data: { meta:{}, methods:{}, designed_settings:{}, protocols:[], records:[] },
+    arena: { task:'', dataset:'', shift:'', source:'', runtime:true, sortKey:'rank', sortAsc:true },
+    details: { task:'', dataset:'', shift:'', source:'', std:true, cite:true, chosen:null },
+  };
+
+  const methodFull = slug => (A.data.methods[slug] && A.data.methods[slug].full) || (slug||'').toUpperCase();
+  // '#' superscript after a method name → click opens that paper's BibTeX.
+  // Rendered only when a papers.json entry (with bibtex) exists for the slug.
+  const bibMark = slug => {
+    const p=(A.data.papers||[]).find(x=>x.slug===slug);
+    return (p && p.bibtex) ? ` <a class="bib-mark" href="#" data-bibslug="${esc(slug)}" title="${esc(p.title||'BibTeX')}">#</a>` : '';
+  };
+
+  /* Task → primary metric. Classification ranks by error (lower wins); the
+     structured tasks rank by mIoU / mAP (higher wins). Records carry `score`
+     (the metric value) so one ranking path serves all three boards. */
+  const taskLowerWins  = t => !(t==='segmentation' || t==='detection');
+  const taskMetricLabel = t => t==='segmentation' ? 'mIoU (%)' : t==='detection' ? 'mAP' : 'Error (%)';
+  const taskMetricDir  = t => taskLowerWins(t) ? '↓' : '↑';
+  const isBetter  = (v, best, lw) => lw ? v<best : v>best;
+  const worstInit = lw => lw ? Infinity : -Infinity;
+
+  function fillSelect(el, options, current, labelFn){
+    el.innerHTML = options.map(o => `<option value="${esc(o)}"${o===current?' selected':''}>${esc(labelFn?labelFn(o):o)}</option>`).join('');
+  }
+  const capWord = s => String(s).replace(/\b\w/g, c=>c.toUpperCase());
+  // protocol/setting order: pin "Continual / Uniform" first (default), keep the rest as-is
+  const SHIFT_FIRST = 'Continual / Uniform';
+  const orderShifts = shifts => [...shifts.filter(s=>s===SHIFT_FIRST), ...shifts.filter(s=>s!==SHIFT_FIRST)];
+
+  async function refresh(){
+    const _incomingHash = location.hash;   // capture before default renders rewrite it
+    try {
+      const res = await fetch('data.json?ts=' + Date.now(), { cache:'no-store' });
+      A.data = await res.json();
+      initArenaFilters();
+      initDetailsFilters();
+      renderArena();
+      renderDetails();
+      if(_incomingHash) applyHash(_incomingHash);   // restore deep-linked view
+    } catch(e){
+      $('a-body').innerHTML = `<tr><td colspan="9" class="text-danger p-4">Failed to load data.json: ${esc(e.message)}</td></tr>`;
+    }
+  }
+
+  /* ---------------- Arena ---------------- */
+  function initArenaFilters(){
+    const recs = A.data.records||[];
+    const tasks = uniq(recs.map(r=>r.task));
+    if(!tasks.includes(A.arena.task)) A.arena.task = tasks[0]||'classification';
+    fillSelect($('a-task'), tasks.length?tasks:['classification'], A.arena.task, capWord);
+    refreshArenaDatasets();
+    $('a-runtime').checked = A.arena.runtime;
+  }
+  function refreshArenaDatasets(){
+    const recs=(A.data.records||[]).filter(r=> A.arena.task==='(all)'||r.task===A.arena.task);
+    const datasets=uniq(recs.map(r=>r.dataset));
+    if(!datasets.includes(A.arena.dataset)) A.arena.dataset = datasets[0]||'';
+    fillSelect($('a-dataset'), datasets.length?datasets:['(none)'], A.arena.dataset);
+    refreshArenaShiftSource();
+  }
+  function refreshArenaShiftSource(){
+    const recs = (A.data.records||[]).filter(r => (A.arena.task==='(all)'||r.task===A.arena.task) && r.dataset===A.arena.dataset);
+    const shifts = orderShifts(uniq(recs.map(r=>r.shift)));
+    const sources = sourcesBySize(recs.map(r=>r.source));
+    if(!shifts.includes(A.arena.shift)) A.arena.shift = shifts[0]||'';
+    if(!sources.includes(A.arena.source)) A.arena.source = litDefaultSource(A.arena.dataset, sources);
+    fillSelect($('a-shift'), shifts.length?shifts:['(none)'], A.arena.shift);
+    fillSelect($('a-source'), sources.length?sources:['(none)'], A.arena.source, modelLabel);
+  }
+  function arenaFiltered(){
+    const f = A.arena;
+    return (A.data.records||[]).filter(r =>
+      (f.task==='(all)'||r.task===f.task) && r.dataset===f.dataset && r.shift===f.shift &&
+      r.source===f.source);
+  }
+  function domainWins(recs, lw){
+    const byDom = new Map();
+    for(const r of recs) for(const [s,m] of Object.entries(r.per_stream||{})){
+      if(m.score==null) continue;
+      if(!byDom.has(s)) byDom.set(s,new Map());
+      const mm=byDom.get(s); if(!mm.has(r.method)) mm.set(r.method,[]); mm.get(r.method).push(m.score);
+    }
+    const wins=new Map();
+    for(const [,methods] of byDom){ let best=worstInit(lw),bm=null;
+      for(const [m,vals] of methods){ const mn=mean(vals); if(isBetter(mn,best,lw)){best=mn;bm=m;} }
+      if(bm) wins.set(bm,(wins.get(bm)||0)+1); }
+    return wins;
+  }
+  function aggregate(){
+    const recs = arenaFiltered();
+    const lw = taskLowerWins(A.arena.task);
+    const groups = new Map();
+    for(const r of recs){ if(!groups.has(r.method)) groups.set(r.method,[]); groups.get(r.method).push(r); }
+    const wins = domainWins(recs, lw);
+    const rows=[];
+    for(const [method,list] of groups){
+      const errs=list.map(r=>r.score).filter(v=>v!=null);
+      const sps=list.map(r=>r.samples_per_s).filter(v=>v!=null);
+      const ads=list.map(r=>r.adapter_s).filter(v=>v!=null);
+      const mem=list.map(r=>r.peak_gpu_mb).filter(v=>v!=null);
+      const optp=list.map(r=>r.optimizer_params).filter(v=>v!=null);
+      rows.push({ method, n_seeds:new Set(list.map(r=>r.seed)).size,
+        score_mean:mean(errs), score_std:std(errs),
+        samples_per_s_mean:mean(sps), samples_per_s_std:std(sps),
+        adapter_s_mean:mean(ads), adapter_s_std:std(ads),
+        peak_gpu_mb_mean:mean(mem),
+        optimizer_params: optp.length?Math.round(mean(optp)):null,
+        domain_wins: wins.get(method)||0 });
+    }
+    const k=A.arena.sortKey, asc=A.arena.sortAsc?1:-1;
+    rows.sort((a,b)=>{
+      if(k==='method') return asc*methodFull(a.method).localeCompare(methodFull(b.method));
+      let va = k==='score'?a.score_mean : a[k]; let vb = k==='score'?b.score_mean : b[k];
+      if(va==null&&vb==null) return 0; if(va==null) return 1; if(vb==null) return -1;
+      return asc*(va-vb);
+    });
+    return rows;
+  }
+  function arrow(k){ return A.arena.sortKey===k ? (A.arena.sortAsc?'↑':'↓') : '↕'; }
+  function th(label,key,extra=''){ return `<th class="sortable ${extra}" data-sort="${key}">${label} <span class="arrow ${A.arena.sortKey===key?'on':''}">${arrow(key)}</span></th>`; }
+
+  function renderArena(){
+    const rt = A.arena.runtime;
+    const rows = aggregate();
+    // head
+    const lw = taskLowerWins(A.arena.task);
+    $('a-head').innerHTML = '<tr>' +
+      th('Rank','rank') + th('Method','method') +
+      th(`${taskMetricLabel(A.arena.task)} ${taskMetricDir(A.arena.task)}`,'score','text-end') +
+      th('Dom-Wins','domain_wins','text-end') +
+      (rt? th('Samples/s','samples_per_s_mean','text-end') + th('Adapter (s)','adapter_s_mean','text-end') +
+           th('Peak GPU (MiB)','peak_gpu_mb_mean','text-end') + th('Upd. params','optimizer_params','text-end') : '') +
+      th('Seeds','n_seeds','text-end') + '</tr>';
+    if(A.arena.sortKey==='rank'){
+      rows.sort((a,b)=>{ const va=a.score_mean, vb=b.score_mean;
+        if(va==null&&vb==null) return 0; if(va==null) return 1; if(vb==null) return -1;
+        return lw ? va-vb : vb-va; });
+    }
+    // body
+    if(!rows.length){ $('a-body').innerHTML = `<tr><td colspan="9" class="text-secondary text-center p-4">No results for this filter.</td></tr>`; }
+    else $('a-body').innerHTML = rows.map((r,i)=>{
+      const cls = i===0?'row-gold':i===1?'row-silver':i===2?'row-bronze':'';
+      const rank = i===0?'<span class="medal">🥇</span>':i===1?'<span class="medal">🥈</span>':i===2?'<span class="medal">🥉</span>':`<span class="text-secondary mono">${i+1}</span>`;
+      const dw = r.domain_wins>0?`<span class="pill" style="background:#fff3cd;color:#946c00">${r.domain_wins}🥇</span>`:'<span class="text-secondary">—</span>';
+      const rtCells = rt ? `
+        <td class="text-end mono">${fmtMS(r.samples_per_s_mean,r.samples_per_s_std,0)}</td>
+        <td class="text-end mono">${fmtMS(r.adapter_s_mean,r.adapter_s_std,1)}</td>
+        <td class="text-end mono">${fmtMS(r.peak_gpu_mb_mean,0,0)}</td>
+        <td class="text-end mono"${r.optimizer_params==null?'':` title="${r.optimizer_params.toLocaleString()}"`}>${fmtSI(r.optimizer_params)}</td>` : '';
+      return `<tr class="${cls}">
+        <td class="text-center">${rank}</td>
+        <td class="fw-medium">${esc(methodFull(r.method))}${bibMark(r.method)}</td>
+        <td class="text-end mono">${fmtMS(r.score_mean,r.score_std,2)}</td>
+        <td class="text-end">${dw}</td>
+        ${rtCells}
+        <td class="text-end mono text-secondary">${r.n_seeds}</td>
+      </tr>`;
+    }).join('');
+    writeHash();
+  }
+
+  /* ---------------- Details ---------------- */
+  const DOM_ABBR = {
+    gaussian_noise:'Gauss.', shot_noise:'Shot', impulse_noise:'Impul.', defocus_blur:'Defoc.',
+    glass_blur:'Glass', motion_blur:'Motion', zoom_blur:'Zoom', snow:'Snow', frost:'Frost',
+    fog:'Fog', brightness:'Brght.', contrast:'Contr.', elastic_transform:'Elast.',
+    pixelate:'Pixel', jpeg_compression:'JPEG',
+  };
+  const domBase = k => k.replace(/_sev\d+$/,'');
+  const domLabel = k => domBase(k).replace(/_/g,' ').replace(/\b\w/g,c=>c.toUpperCase()).replace(/\bJpeg\b/,'JPEG');
+  const domAbbr  = k => DOM_ABBR[domBase(k)] || domLabel(k);
+
+  function initDetailsFilters(){
+    const recs = A.data.records||[];
+    const tasks = uniq(recs.map(r=>r.task));
+    if(!tasks.includes(A.details.task)) A.details.task = tasks[0]||'classification';
+    fillSelect($('de-task'), tasks.length?tasks:['classification'], A.details.task, capWord);
+    refreshDetailsDatasets();
+    $('de-std').checked = A.details.std;
+    $('de-cite').checked = A.details.cite;
+  }
+  function refreshDetailsDatasets(){
+    const recs=(A.data.records||[]).filter(r=>A.details.task==='(all)'||r.task===A.details.task);
+    const datasets=uniq(recs.map(r=>r.dataset));
+    if(!datasets.includes(A.details.dataset)) A.details.dataset=datasets[0]||'';
+    fillSelect($('de-dataset'), datasets.length?datasets:['(none)'], A.details.dataset);
+    refreshDetailsShiftSource();
+  }
+  function refreshDetailsShiftSource(){
+    const recs = (A.data.records||[]).filter(r => (A.details.task==='(all)'||r.task===A.details.task) && r.dataset===A.details.dataset);
+    const shifts = orderShifts(uniq(recs.map(r=>r.shift)));
+    const sources = sourcesBySize(recs.map(r=>r.source));
+    if(!shifts.includes(A.details.shift)) A.details.shift = shifts[0]||'';
+    const srcOpts = sources.length ? [ALL_MODELS, ...sources] : ['(none)'];
+    if(!srcOpts.includes(A.details.source)) A.details.source = litDefaultSource(A.details.dataset, sources);
+    fillSelect($('de-shift'), shifts.length?shifts:['(none)'], A.details.shift);
+    fillSelect($('de-source'), srcOpts, A.details.source, modelLabel);
+  }
+  function detailsFiltered(){
+    const f = A.details;
+    return (A.data.records||[]).filter(r =>
+      (f.task==='(all)'||r.task===f.task) && r.dataset===f.dataset && r.shift===f.shift &&
+      (f.source===ALL_MODELS || r.source===f.source));
+  }
+  // method → mean overall score, for the current setting
+  function detailsMethodErrors(recs){
+    const g=new Map();
+    for(const r of recs){ if(r.score==null) continue; if(!g.has(r.method)) g.set(r.method,[]); g.get(r.method).push(r.score); }
+    const out=new Map(); for(const [m,e] of g) out.set(m, mean(e)); return out;
+  }
+  // available methods (slugs) in current setting, ordered best-first (direction
+  // depends on the task: lower error vs higher mIoU/mAP)
+  function detailsMethodsByError(recs){
+    const lw=taskLowerWins(A.details.task);
+    return [...detailsMethodErrors(recs).entries()]
+      .sort((a,b)=>{ const va=a[1]??worstInit(lw), vb=b[1]??worstInit(lw); return lw?va-vb:vb-va; })
+      .map(x=>x[0]);
+  }
+  // initial comparison set (paper-style: Source baseline first, then methods).
+  // Task-aware so each board opens with methods that actually exist for it.
+  const DETAILS_DEFAULT_BY_TASK = {
+    classification: ['source','tent','cotta','sar','ods','t3a','santa','gold','note','lame'],
+    segmentation:   ['source','tent','cotta','eata','sar','diga','svdp','vptta'],
+    detection:      ['source','tent','cotta','eata','sar','meanteacher','actmad','stfar'],
+  };
+  const detailsDefault = () => DETAILS_DEFAULT_BY_TASK[A.details.task] || DETAILS_DEFAULT_BY_TASK.classification;
+  // selected methods, in chosen order; null = default set above (filtered to what's available)
+  function detailsChosen(recs){
+    const byErr = detailsMethodsByError(recs);
+    const avail = new Set(byErr);
+    if(A.details.chosen===null) return detailsDefault().filter(m=>avail.has(m));
+    return A.details.chosen.filter(m=>avail.has(m));
+  }
+
+  // Aggregate per (method, domain) across seeds → {domains, rows:[{m, cells:{d:{mean,std}}, mean, std}], best:{d:m}, bestMean}
+  function detailsAgg(recs, methods){
+    const lw=taskLowerWins(A.details.task);
+    const domSet=new Set();
+    for(const r of recs) for(const s of Object.keys(r.per_stream||{})) domSet.add(s);
+    const domains=[...domSet].sort();
+    const byMethod=new Map();
+    for(const r of recs){
+      if(!byMethod.has(r.method)) byMethod.set(r.method,{errs:{},all:[]});
+      const row=byMethod.get(r.method);
+      if(r.score!=null) row.all.push(r.score);
+      for(const [s,m] of Object.entries(r.per_stream||{})){ if(m.score==null) continue; (row.errs[s]=row.errs[s]||[]).push(m.score); }
+    }
+    const rows=[];
+    for(const m of methods){
+      const row=byMethod.get(m); if(!row) continue;
+      const cells={};
+      for(const d of domains){ const a=row.errs[d]; cells[d]=a&&a.length?{mean:mean(a),std:std(a)}:null; }
+      rows.push({ m, cells, mean:row.all.length?mean(row.all):null, std:row.all.length?std(row.all):null });
+    }
+    // rows preserve the passed `methods` order (drag order or best-first)
+    const best={};
+    for(const d of domains){ let b=worstInit(lw),bm=null; for(const r of rows){ const c=r.cells[d]; if(c&&isBetter(c.mean,b,lw)){b=c.mean;bm=r.m;} } best[d]=bm; }
+    let bm=null,bv=worstInit(lw); for(const r of rows){ if(r.mean!=null&&isBetter(r.mean,bv,lw)){bv=r.mean;bm=r.m;} }
+    return { domains, rows, best, bestMean:bm };
+  }
+
+  function renderDetailsPicker(recs){
+    const chosen = detailsChosen(recs);
+    const chosenSet = new Set(chosen);
+    const errs = detailsMethodErrors(recs);
+    const pool = detailsMethodsByError(recs).filter(m=>!chosenSet.has(m));
+    $('de-mcount').textContent = `(${chosen.length} selected · ${pool.length} available)`;
+    const chip = m => `<div class="de-mitem" draggable="true" data-m="${esc(m)}" title="Drag">`+
+      `<span class="de-drag" aria-hidden="true">⠿</span>`+
+      `<span class="de-mname">${esc(methodFull(m))}</span>`+
+      `<span class="de-merr mono">${errs.has(m)?errs.get(m).toFixed(1):'—'}</span></div>`;
+    $('de-pool').innerHTML = pool.map(chip).join('');
+    $('de-chosen').innerHTML = chosen.map(chip).join('');
+  }
+
+  // model-axis: methods (rows) × source models (cols), cell = mean overall
+  // error of that method on that model; "Mean" = mean across the shown models.
+  function detailsModelAgg(recs, methods){
+    const lw=taskLowerWins(A.details.task);
+    const models=[...new Set(recs.map(r=>r.source))].sort((a,b)=>modelSize(a)-modelSize(b));
+    const byMethod=new Map();
+    for(const r of recs){ if(r.score==null) continue;
+      if(!byMethod.has(r.method)) byMethod.set(r.method,{});
+      const row=byMethod.get(r.method); (row[r.source]=row[r.source]||[]).push(r.score); }
+    const rows=[];
+    for(const m of methods){ const row=byMethod.get(m); if(!row) continue;
+      const cells={}, all=[];
+      for(const md of models){ const a=row[md];
+        if(a&&a.length){ cells[md]={mean:mean(a),std:std(a)}; all.push(...a); } else cells[md]=null; }
+      rows.push({ m, cells, mean: all.length?mean(all):null, std: all.length?std(all):null }); }
+    const best={};
+    for(const md of models){ let b=worstInit(lw),bm=null; for(const r of rows){ const c=r.cells[md]; if(c&&isBetter(c.mean,b,lw)){b=c.mean;bm=r.m;} } best[md]=bm; }
+    let bm=null,bv=worstInit(lw); for(const r of rows){ if(r.mean!=null&&isBetter(r.mean,bv,lw)){bv=r.mean;bm=r.m;} }
+    return { models, rows, best, bestMean:bm };
+  }
+  function renderModelMatrix(recs, methods){
+    const { models, rows, best, bestMean } = detailsModelAgg(recs, methods);
+    if(!models.length || !rows.length){
+      $('de-head').innerHTML='';
+      $('de-body').innerHTML=`<tr><td class="text-secondary p-3">${rows.length?'No model data for this selection.':'Drag methods into the “Selected” area below to compare.'}</td></tr>`;
+      return;
+    }
+    const showStd = A.details.std;
+    $('de-head').innerHTML = '<tr><th>Method</th>' +
+      models.map(md=>`<th class="text-end dcol" title="${esc(md)}">${esc(modelLabel(md))}</th>`).join('') +
+      '<th class="text-end" style="background:#e7e9ff">Mean</th></tr>';
+    const cellBody = (c) => { if(!c) return '<span class="text-secondary">—</span>';
+      const num=c.mean.toFixed(1); return showStd&&c.std?`${num}<span class="de-std-sub">±${c.std.toFixed(1)}</span>`:num; };
+    $('de-body').innerHTML = rows.map(r=>{
+      const tds = models.map(md=>`<td class="text-end mono ${best[md]===r.m?'best-cell':''}">${cellBody(r.cells[md])}</td>`).join('');
+      const meanB = bestMean===r.m;
+      const meanCell = r.mean==null ? '—'
+        : `${r.mean.toFixed(2)}${showStd&&r.std?`<span class="de-std-sub">±${r.std.toFixed(2)}</span>`:''}`;
+      return `<tr><td class="fw-medium text-nowrap">${esc(methodFull(r.m))}${bibMark(r.m)}</td>${tds}<td class="text-end mono ${meanB?'best-cell':''}" style="${meanB?'':'background:#f4f5ff'}">${meanCell}</td></tr>`;
+    }).join('');
+  }
+
+  function renderDetails(){
+    const recs = detailsFiltered();
+    $('de-caption').innerHTML = `(${taskMetricLabel(A.details.task)} per corruption · ${taskLowerWins(A.details.task)?'lower':'higher'} wins · best in <strong>teal</strong>)`;
+    renderDetailsPicker(recs);
+    const methods = detailsChosen(recs);
+    if(A.details.source===ALL_MODELS){ renderModelMatrix(recs, methods); return; }
+    const { domains, rows, best, bestMean } = detailsAgg(recs, methods);
+    if(!domains.length || !rows.length){
+      $('de-head').innerHTML='';
+      const msg = !domains.length ? 'No per-stream data for this selection.'
+                                  : 'Drag methods into the “Selected” area below to compare.';
+      $('de-body').innerHTML=`<tr><td class="text-secondary p-3">${msg}</td></tr>`;
+      return;
+    }
+    const showStd = A.details.std;
+    $('de-head').innerHTML = '<tr><th>Method</th>' +
+      domains.map(d=>`<th class="text-end dcol" title="${esc(domLabel(d))}">${esc(domAbbr(d))}</th>`).join('') +
+      '<th class="text-end" style="background:#e7e9ff">Mean</th></tr>';
+    const cellBody = (c) => {
+      if(!c) return '<span class="text-secondary">—</span>';
+      const num = c.mean.toFixed(1);
+      return showStd && c.std ? `${num}<span class="de-std-sub">±${c.std.toFixed(1)}</span>` : num;
+    };
+    $('de-body').innerHTML = rows.map(r=>{
+      const tds = domains.map(d=>`<td class="text-end mono ${best[d]===r.m?'best-cell':''}">${cellBody(r.cells[d])}</td>`).join('');
+      const meanB = bestMean===r.m;
+      const meanCell = r.mean==null ? '—'
+        : `${r.mean.toFixed(2)}${showStd&&r.std?`<span class="de-std-sub">±${r.std.toFixed(2)}</span>`:''}`;
+      return `<tr><td class="fw-medium text-nowrap">${esc(methodFull(r.m))}${bibMark(r.m)}</td>${tds}<td class="text-end mono ${meanB?'best-cell':''}" style="${meanB?'':'background:#f4f5ff'}">${meanCell}</td></tr>`;
+    }).join('');
+    writeHash();
+  }
+
+  // ---- exporters ----
+  function detailsExportData(){
+    const recs = detailsFiltered();
+    const methods = detailsChosen(recs);
+    if(A.details.source===ALL_MODELS){
+      const { models, rows, best, bestMean } = detailsModelAgg(recs, methods);
+      return { recs, domains: models, rows, best, bestMean, colAbbr: modelLabel, colLabel: modelLabel };
+    }
+    return { recs, ...detailsAgg(recs, methods), colAbbr: domAbbr, colLabel: domLabel };
+  }
+  function fmtNum(c, std, d){ // c:{mean,std} cell or null
+    if(!c || c.mean==null) return null;
+    const m=c.mean.toFixed(d);
+    return std && c.std ? `${m} ± ${c.std.toFixed(d)}` : m;
+  }
+  function ltxEsc(s){ return String(s).replace(/([&%#_${}])/g,'\\$1'); }
+  // method slug → { key, bibtex } from the papers catalog (null if no bibtex, e.g. "source")
+  function detailsBibInfo(slug){
+    const p=(A.data.papers||[]).find(x=>x.slug===slug);
+    if(!p||!p.bibtex) return null;
+    const m=p.bibtex.match(/@\w+\s*\{\s*([^,\s]+)/);
+    return { key: m?m[1]:null, bibtex:p.bibtex.trim() };
+  }
+  function detailsLatex(){
+    const { domains, rows, best, bestMean, colAbbr } = detailsExportData();
+    const showStd = A.details.std, cite = A.details.cite;
+    if(!rows.length) return '% no methods selected';
+    const colspec = 'l|' + 'c'.repeat(domains.length) + '|c';
+    const cap = `${A.details.dataset} — ${A.details.shift} (${modelLabel(A.details.source)})`;
+    const mword = A.details.task==='segmentation' ? 'mIoU (\\%)'
+                : A.details.task==='detection' ? 'mAP' : 'error (\\%)';
+    const mdir  = taskLowerWins(A.details.task) ? 'lower is better' : 'higher is better';
+    const numTex = (val, isBest) => {
+      if(val==null) return '--';
+      const parts = String(val).split(' ± ');
+      const body = parts[1] ? `${parts[0]} $\\pm$ ${parts[1]}` : parts[0];
+      return isBest ? `\\textbf{${body}}` : body;
+    };
+    const header = ['Method', ...domains.map(d=>colAbbr(d)), 'Mean'].map(ltxEsc).join(' & ');
+    let anyCite=false;
+    const lines = rows.map(r=>{
+      const cells = domains.map(d=>numTex(fmtNum(r.cells[d], showStd, 1), best[d]===r.m));
+      const meanV = r.mean==null ? '--' : numTex(showStd&&r.std?`${r.mean.toFixed(2)} ± ${r.std.toFixed(2)}`:r.mean.toFixed(2), bestMean===r.m);
+      let name = ltxEsc(methodFull(r.m));
+      if(cite){ const b=detailsBibInfo(r.m); if(b&&b.key){ name+=`~\\cite{${b.key}}`; anyCite=true; } }
+      return `${name} & ${cells.join(' & ')} & ${meanV} \\\\`;
+    });
+    return [
+      `% Test-Time Adaptation Leaderboard — ${cap}`,
+      `% ${mword}, ${mdir}; best per column in \\textbf{bold}.${showStd?' Cells are mean $\\pm$ std over seeds.':''}`,
+      `% Requires \\usepackage{booktabs}${anyCite?'; \\cite{} keys are provided by the "Export BibTeX" button.':''}`,
+      `\\begin{table}[t]`,
+      `\\centering`,
+      `\\caption{Per-${A.details.source===ALL_MODELS?'model':'corruption'} ${mword} on ${ltxEsc(cap)}.}`,
+      `\\resizebox{\\linewidth}{!}{%`,
+      `\\begin{tabular}{${colspec}}`,
+      `\\toprule`,
+      `${header} \\\\`,
+      `\\midrule`,
+      ...lines,
+      `\\bottomrule`,
+      `\\end{tabular}}`,
+      `\\end{table}`,
+    ].join('\n');
+  }
+  function detailsBibtex(){
+    const { rows } = detailsExportData();
+    if(!rows.length) return '% no methods selected';
+    const seen=new Set(), out=[], missing=[];
+    for(const r of rows){
+      const b=detailsBibInfo(r.m);
+      if(!b||!b.key){ missing.push(methodFull(r.m)); continue; }
+      if(seen.has(b.key)) continue;
+      seen.add(b.key); out.push(b.bibtex);
+    }
+    const head = missing.length ? `% No BibTeX for: ${missing.join(', ')}\n` : '';
+    return out.length ? head+out.join('\n\n') : head+'% No BibTeX available for the selected methods.';
+  }
+  function detailsCSV(){
+    const { domains, rows, colLabel } = detailsExportData();
+    const showStd = A.details.std;
+    if(!rows.length) return '';
+    const head = ['Method', ...domains.map(d=>colLabel(d)), 'Mean'];
+    const csvCell = v => /[",\n]/.test(v) ? `"${v.replace(/"/g,'""')}"` : v;
+    const body = rows.map(r=>{
+      const cells = domains.map(d=>fmtNum(r.cells[d], showStd, 1) ?? '');
+      const meanV = r.mean==null ? '' : (showStd&&r.std?`${r.mean.toFixed(2)} ± ${r.std.toFixed(2)}`:r.mean.toFixed(2));
+      return [methodFull(r.m), ...cells, meanV].map(csvCell).join(',');
+    });
+    return [head.map(csvCell).join(','), ...body].join('\n');
+  }
+
+  function openExport(title, text){
+    $('exp-title').textContent = title;
+    $('exp-text').value = text;
+    $('exp-overlay').style.display = 'flex';
+    setTimeout(()=>{ $('exp-text').focus(); $('exp-text').select(); }, 30);
+  }
+  function copyExport(){
+    const ta=$('exp-text'); ta.focus(); ta.select();
+    let ok=false; try{ ok=document.execCommand('copy'); }catch(e){}
+    if(!ok && navigator.clipboard){ navigator.clipboard.writeText(ta.value).catch(()=>{}); ok=true; }
+    const btn=$('exp-copy'); const t=btn.textContent; btn.textContent=ok?'Copied!':'Select & ⌘/Ctrl+C';
+    setTimeout(()=>{ btn.textContent=t; }, 1500);
+  }
+
+  /* ---------------- deep-link via URL hash ----------------
+     Shareable links: #arena , #details , and with filter state e.g.
+     #arena?task=detection&dataset=COCO-C&source=frcnn-r50-coco
+     (shift/source URL-encoded). The cascading select refreshes keep any valid
+     seeded value and fall back to defaults for the rest, so partial links work. */
+  const _HASH_KEYS = ['task','dataset','shift','source'];
+  let _applyingHash = false;
+  function activeTab(){ return document.querySelector('#tabs .nav-link.active')?.dataset.tab || 'arena'; }
+  function switchTab(t){
+    document.querySelectorAll('#tabs .nav-link').forEach(x=>x.classList.remove('active'));
+    const link=document.querySelector(`#tabs .nav-link[data-tab="${t}"]`); if(link) link.classList.add('active');
+    $('tab-arena').classList.toggle('d-none', t!=='arena');
+    $('tab-details').classList.toggle('d-none', t!=='details');
+    $('tab-about').classList.toggle('d-none', t!=='about');
+    if(t==='details') renderDetails();
+  }
+  function writeHash(){
+    if(_applyingHash) return;
+    const t=activeTab(); let h='#'+t;
+    if(t==='arena'||t==='details'){
+      const f=A[t], p=new URLSearchParams();
+      for(const k of _HASH_KEYS) if(f[k]) p.set(k,f[k]);
+      const q=p.toString(); if(q) h+='?'+q;
+    }
+    if(location.hash!==h) history.replaceState(null,'',h);
+  }
+  function applyHash(hashStr){
+    if(!(A.data.records||[]).length) return;            // data not loaded yet
+    const raw=((hashStr!=null?hashStr:location.hash)||'').replace(/^#/,'');
+    if(!raw) return;
+    const qi=raw.indexOf('?');
+    const tabRaw=qi<0?raw:raw.slice(0,qi);
+    const t=['arena','details','about'].includes(tabRaw)?tabRaw:'arena';
+    const params=new URLSearchParams(qi<0?'':raw.slice(qi+1));
+    _applyingHash=true;
+    if(t==='arena'||t==='details'){
+      const f=A[t];
+      for(const k of _HASH_KEYS) if(params.has(k)) f[k]=params.get(k);
+      if(t==='arena') initArenaFilters(); else initDetailsFilters();  // refill selects honoring seeded state
+    }
+    switchTab(t);                       // renders details internally
+    if(t==='arena') renderArena();
+    _applyingHash=false;
+  }
+
+  /* ---------------- wiring ---------------- */
+  function wire(){
+    // tabs — only internal panels (links with [data-tab]); external links
+    // (e.g. the Awesome ↗ link) keep their default open-in-new-tab behaviour.
+    document.querySelectorAll('#tabs .nav-link[data-tab]').forEach(a=>{
+      a.addEventListener('click',()=>{ switchTab(a.dataset.tab); writeHash(); });
+    });
+    // deep-link: react to manual URL hash changes / shared links / back-forward
+    window.addEventListener('hashchange', ()=>applyHash());
+    document.addEventListener('keydown',e=>{ if(e.key==='Escape'){ $('exp-overlay').style.display='none'; } });
+    // method-name '#' marker → show that method's BibTeX (Arena + Details tables)
+    document.addEventListener('click',e=>{
+      const lk=e.target.closest('[data-bibslug]'); if(!lk) return;
+      e.preventDefault();
+      const b=detailsBibInfo(lk.dataset.bibslug);
+      if(b && b.bibtex) openExport(methodFull(lk.dataset.bibslug)+' — BibTeX', b.bibtex);
+    });
+    // About tab → per-card EN / 中文 language toggle
+    document.querySelectorAll('#tab-about .langtoggle').forEach(g=>{
+      g.addEventListener('click',e=>{
+        const btn=e.target.closest('button[data-lang]'); if(!btn) return;
+        const zh=btn.dataset.lang==='zh';
+        g.closest('.langcard').classList.toggle('show-zh',zh);
+        g.querySelectorAll('button').forEach(b=>b.classList.toggle('active', b===btn));
+      });
+    });
+    // arena filters
+    $('a-task').addEventListener('change',e=>{A.arena.task=e.target.value; refreshArenaDatasets(); renderArena();});
+    $('a-dataset').addEventListener('change',e=>{A.arena.dataset=e.target.value; refreshArenaShiftSource(); renderArena();});
+    $('a-shift').addEventListener('change',e=>{A.arena.shift=e.target.value; renderArena();});
+    $('a-source').addEventListener('change',e=>{A.arena.source=e.target.value; renderArena();});
+    $('a-runtime').addEventListener('change',e=>{A.arena.runtime=e.target.checked; renderArena();});
+    // arena sort (delegated)
+    $('a-head').addEventListener('click',e=>{
+      const thEl=e.target.closest('th[data-sort]'); if(!thEl) return;
+      const k=thEl.dataset.sort;
+      if(A.arena.sortKey===k) A.arena.sortAsc=!A.arena.sortAsc;
+      else { A.arena.sortKey=k; A.arena.sortAsc = (k==='method'||k==='rank') ? true
+              : (k==='score' ? taskLowerWins(A.arena.task) : false); }
+      renderArena();
+    });
+    // details filters
+    $('de-task').addEventListener('change',e=>{A.details.task=e.target.value; A.details.chosen=null; refreshDetailsDatasets(); renderDetails();});
+    $('de-dataset').addEventListener('change',e=>{A.details.dataset=e.target.value; A.details.chosen=null; refreshDetailsShiftSource(); renderDetails();});
+    $('de-shift').addEventListener('change',e=>{A.details.shift=e.target.value; renderDetails();});
+    $('de-source').addEventListener('change',e=>{A.details.source=e.target.value; renderDetails();});
+    $('de-std').addEventListener('change',e=>{A.details.std=e.target.checked; renderDetails();});
+    $('de-cite').addEventListener('change',e=>{A.details.cite=e.target.checked;});
+    // quick actions
+    $('de-all').addEventListener('click',()=>{ A.details.chosen=detailsMethodsByError(detailsFiltered()); renderDetails(); });
+    $('de-none').addEventListener('click',()=>{ A.details.chosen=[]; renderDetails(); });
+    $('de-top').addEventListener('click',()=>{ A.details.chosen=detailsMethodsByError(detailsFiltered()).slice(0,10); renderDetails(); });
+    // two-zone drag picker (delegated on #de-picker, which persists across re-renders)
+    const picker=$('de-picker');
+    picker.addEventListener('dragstart',e=>{
+      const it=e.target.closest('.de-mitem'); if(!it) return;
+      it.classList.add('dragging');
+      e.dataTransfer.effectAllowed='move';
+      try{ e.dataTransfer.setData('text/plain', it.dataset.m); }catch(_){}
+    });
+    picker.addEventListener('dragover',e=>{
+      const dragging=picker.querySelector('.de-mitem.dragging'); if(!dragging) return;
+      const zone=e.target.closest('.de-zone'); if(!zone) return;
+      e.preventDefault(); e.dataTransfer.dropEffect='move';
+      picker.querySelectorAll('.de-zone').forEach(z=>z.classList.toggle('dragover', z===zone));
+      const target=e.target.closest('.de-mitem');
+      if(target && target!==dragging){
+        const r=target.getBoundingClientRect();
+        const before = e.clientX < r.left + r.width/2;
+        zone.insertBefore(dragging, before?target:target.nextSibling);
+      } else if(!target){
+        zone.appendChild(dragging);              // empty zone or gap → drop at end
+      }
+    });
+    picker.addEventListener('drop',e=>e.preventDefault());
+    picker.addEventListener('dragend',()=>{
+      picker.querySelectorAll('.de-zone').forEach(z=>z.classList.remove('dragover'));
+      const it=picker.querySelector('.de-mitem.dragging'); if(it) it.classList.remove('dragging');
+      A.details.chosen=[...$('de-chosen').querySelectorAll('.de-mitem')].map(el=>el.dataset.m);
+      renderDetails();
+    });
+    // exporters
+    $('de-latex').addEventListener('click',()=>openExport('LaTeX table', detailsLatex()));
+    $('de-bib').addEventListener('click',()=>openExport('BibTeX', detailsBibtex()));
+    $('de-csv').addEventListener('click',()=>openExport('CSV', detailsCSV()));
+    $('exp-close').addEventListener('click',()=>{ $('exp-overlay').style.display='none'; });
+    $('exp-copy').addEventListener('click',copyExport);
+    $('exp-overlay').addEventListener('click',e=>{ if(e.target===$('exp-overlay')) $('exp-overlay').style.display='none'; });
+  }
+
+  wire();
+  refresh();
+})();
+</script>
+</body>
+</html>
