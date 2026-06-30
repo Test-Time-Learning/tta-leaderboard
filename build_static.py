@@ -8,9 +8,7 @@ Re-run after every ``scripts/sync_results.sh``.
 from __future__ import annotations
 
 import json
-import re
 import sys
-from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
@@ -65,212 +63,16 @@ def _load_json(name: str):
 
 PAPER_META: dict[str, dict[str, Any]] = _load_json("papers.json") or {}
 
-# Topic category for the 19 benchmarked methods. Kept on each paper entry for
-# potential downstream use (currently informational).
-BENCH_CATEGORY: dict[str, str] = {
-    "tent": "Entropy / Pseudo-label", "eata": "Entropy / Pseudo-label",
-    "sar": "Entropy / Pseudo-label", "deyo": "Entropy / Pseudo-label",
-    "adabn": "Normalization",
-    "lame": "Output / Prototype", "t3a": "Output / Prototype",
-    "memo": "Augmentation", "tea": "Energy", "adacontrast": "Self-supervised",
-    "cotta": "Continual / Online TTA", "rotta": "Continual / Online TTA",
-    "rmt": "Continual / Online TTA", "becotta": "Continual / Online TTA",
-    "dss": "Continual / Online TTA", "gold": "Continual / Online TTA",
-    "santa": "Continual / Online TTA", "obao": "Continual / Online TTA",
-    "note": "Continual / Online TTA",
-}
-
-
-_JOURNAL_TOKENS = ("tmlr", "ijcv", "jmlr", "tpami", "pami", "pattern recognition",
-                   "journal of", "transactions", "tmi", "media", "tip", "tnnls", "imwut")
-_CONF_TOKENS = ("iclr", "neurips", "icml", "cvpr", "iccv", "eccv", "aaai", "wacv",
-                "aistats", "bmvc", "ijcai", "acl", "emnlp", "naacl", "kdd", "3dv",
-                "icra", "miccai", "iros", "interspeech", "asru", "wsdm")
-
-
-# Verified presentation status (Oral / Spotlight) per slug. Web-verified against
-# venue accepted-paper lists / OpenReview decisions; everything else is a poster.
-PRESENTATION: dict[str, str] = {
-    "ods": "Oral", "owttt": "Oral", "sar": "Oral", "lame": "Oral", "sgp": "Oral",
-    "tent": "Spotlight", "eata": "Spotlight", "t3a": "Spotlight", "deyo": "Spotlight",
-}
-
-
-def classify_venue(venue: str) -> tuple[str, str, str]:
-    """Return (display_label, venue_name, venue_type). type ∈ conference|journal|other."""
-    v = venue or ""
-    low = v.lower()
-    label = re.sub(r"\s*\((oral|spotlight|notable[^)]*)\)", "", v, flags=re.I).strip()
-    # venue_name = venue without year / issue / Workshop tag — used as a search key.
-    name = re.sub(r"\b\d{4}\b.*$", "", label).replace("Workshop", "").strip(" ,")
-    if "workshop" in low or "arxiv" in low or "preprint" in low:
-        vtype = "other"
-    elif any(t in low for t in _JOURNAL_TOKENS):
-        vtype = "journal"
-    elif any(re.search(r"\b" + t + r"\b", low) for t in _CONF_TOKENS):
-        vtype = "conference"
-    else:
-        vtype = "other"
-    return label, name, vtype
-
-
 def build_paper_list() -> list[dict[str, Any]]:
-    """Bibliography entries for the 19 benchmarked methods (for Details-tab export)."""
-    papers: list[dict[str, Any]] = []
-
-    def entry(slug, full, meta, category, benchmarked):
-        label, vname, vtype = classify_venue(meta.get("venue") or "")
-        pres = PRESENTATION.get(slug) or meta.get("presentation")
-        return {
-            "slug": slug, "full": full,
-            "title": meta.get("title"), "authors": meta.get("authors"),
-            "venue": meta.get("venue"), "venue_label": label, "venue_name": vname,
-            "venue_type": vtype, "presentation": pres,
-            "category": category,
-            "task": meta.get("task") or "Image Classification",
-            "url": meta.get("url"), "pdf": meta.get("pdf"),
-            "code": meta.get("code"), "bibtex": meta.get("bibtex"),
-            "benchmarked": benchmarked,
-        }
-
-    for slug, meta in PAPER_META.items():
-        cat = METHODS_CATALOG.get(slug, {})
-        papers.append(entry(slug, cat.get("full") or slug.upper(), meta,
-                            BENCH_CATEGORY.get(slug, "Other"), True))
-
-    papers.sort(key=lambda x: (x["full"] or "").lower())
+    """Bibliography entries (slug/title/bibtex) for the Details-tab exporters."""
+    papers = [
+        {"slug": slug, "title": meta.get("title"), "bibtex": meta.get("bibtex")}
+        for slug, meta in PAPER_META.items()
+    ]
+    papers.sort(key=lambda x: (x["title"] or "").lower())
     return papers
 
-DESIGNED_SETTINGS: dict[str, list[str]] = {
-    "source":      ["—"],
-    "tent":        ["Online / Uniform"],
-    "adabn":       ["Online / Uniform"],
-    "eata":        ["Online / Uniform"],
-    "sar":         ["Online / Uniform", "Online / Imbalanced"],
-    "lame":        ["Online / Uniform", "Online / Imbalanced"],
-    "t3a":         ["Online / Uniform"],
-    "deyo":        ["Online / Uniform", "Continual"],
-    "memo":        ["Episodic"],
-    "tea":         ["Online / Uniform", "Continual"],
-    "cotta":       ["Continual"],
-    "adacontrast": ["Online / Uniform"],
-    "rotta":       ["Continual / Non-i.i.d."],
-    "rmt":         ["Continual"],
-    "becotta":     ["Continual / Compositional"],
-    "dss":         ["Continual / Non-i.i.d."],
-    "gold":        ["Online / Uniform", "Continual"],
-    "santa":       ["Online / Uniform", "Continual"],
-    "obao":        ["Online / Uniform", "Continual"],
-    "note":        ["Continual / Non-i.i.d."],
-}
 
-# Datasets we evaluate against, per task, with the leaderboard's target run
-# count and the number of (method × shift) cells expected when complete. The
-# frontend coverage panel shows the entry list for the currently-selected task.
-TARGET_DATASETS_BY_TASK = {
-    "classification": [
-        {"hf": "TTA-CIFAR-10-C",  "label": "CIFAR-10-C",  "target": 20 * 6 * 5, "cells": 120},
-        {"hf": "TTA-CIFAR-100-C", "label": "CIFAR-100-C", "target": 20 * 6 * 5, "cells": 120},
-        {"hf": "TTA-ImageNet-C",  "label": "ImageNet-C",  "target": 20 * 6 * 5, "cells": 120},
-    ],
-    # Segmentation: core-5 + DIGA, continual protocol, 5 seeds.
-    "segmentation": [
-        {"hf": "TTA-Cityscapes-C", "label": "Cityscapes-C", "target": 6 * 1 * 5, "cells": 6},
-        {"hf": "TTA-ADE20K-C",     "label": "ADE20K-C",     "target": 6 * 1 * 5, "cells": 6},
-    ],
-    # Detection: source/tent/cotta/eata/sar/meanteacher/actmad, online, 5 seeds.
-    "detection": [
-        {"hf": "TTA-COCO-C", "label": "COCO-C", "target": 7 * 1 * 5, "cells": 7},
-    ],
-}
-
-# Protocols (settings) we evaluate every method against.
-PROTOCOLS_GLOSSARY = [
-    {
-        "key": "online_uniform",
-        "shift": "Online / Uniform",
-        "label": "Online · Uniform",
-        "mode": "online",
-        "reset_policy": "per_stream",
-        "sampling": "uniform i.i.d.",
-        "definition": "One corruption stream at a time. Within each stream, batches are drawn i.i.d. The adapter state is reset between corruptions.",
-        "stream_order": "15 corruptions are processed independently; order across corruptions does not matter.",
-        "batch_distribution": "Each batch reflects the natural class proportions of the dataset.",
-        "reset": "Adapter state resets between corruptions (`reset_policy=per_stream`).",
-        "originating": "Wang et al., TENT (ICLR 2021), Table 3 setting — the canonical online TTA benchmark.",
-        "use_when": "Default evaluation for any TTA method; tests pure adaptation without temporal drift.",
-    },
-    {
-        "key": "continual_uniform",
-        "shift": "Continual / Uniform",
-        "label": "Continual · Uniform",
-        "mode": "continual",
-        "reset_policy": "never",
-        "sampling": "uniform i.i.d.",
-        "definition": "Streams flow back-to-back without resetting adapter state. The model must accumulate adaptation across all 15 corruptions.",
-        "stream_order": "Streams concatenated in a fixed order (alphabetical by corruption name).",
-        "batch_distribution": "Each batch reflects the natural class proportions of the dataset.",
-        "reset": "Adapter state persists across streams (`reset_policy=never`).",
-        "originating": "Wang et al., CoTTA (CVPR 2022) — measures resistance to error accumulation under long sequences.",
-        "use_when": "Tests whether a method can adapt continuously without catastrophic forgetting or drift.",
-    },
-    {
-        "key": "continual_dir01",
-        "shift": "Continual / Dirichlet (α=0.1)",
-        "label": "Continual · Dirichlet α=0.1 (strong class correlation)",
-        "mode": "continual",
-        "reset_policy": "never",
-        "sampling": "Dirichlet (α=0.1)",
-        "definition": "Continual stream where each batch's class proportions are drawn from a Dirichlet(α) distribution with small α — batches cluster heavily on a few classes.",
-        "stream_order": "Same as Continual; corruption-level order fixed, but per-batch class shifts dramatically.",
-        "batch_distribution": "Highly skewed (low α) — most batches dominated by 1–2 classes, producing severe label shift over time.",
-        "reset": "Adapter state persists.",
-        "originating": "Yuan et al., NOTE (NeurIPS 2022) — non-i.i.d. evaluation; small α stresses methods that assume balanced batches.",
-        "use_when": "Stress-tests robustness to non-i.i.d. test streams; breaks entropy-min methods relying on diverse predictions.",
-    },
-    {
-        "key": "continual_dir10",
-        "shift": "Continual / Dirichlet (α=1.0)",
-        "label": "Continual · Dirichlet α=1.0 (mild class correlation)",
-        "mode": "continual",
-        "reset_policy": "never",
-        "sampling": "Dirichlet (α=1.0)",
-        "definition": "Same as α=0.1 but with α=1.0: batches still non-uniform, but the class distribution is closer to uniform.",
-        "stream_order": "Same as Continual.",
-        "batch_distribution": "Moderately skewed — distinguishes methods that overfit to extreme correlations from those that genuinely tolerate non-i.i.d. streams.",
-        "reset": "Adapter state persists.",
-        "originating": "Companion setting to α=0.1, common in non-i.i.d. TTA papers (RoTTA, NOTE, DSS).",
-        "use_when": "Tests sensitivity to milder correlation; complements α=0.1 to characterize the full robustness curve.",
-    },
-    {
-        "key": "continual_twk5",
-        "shift": "Continual / Tweak One (γ=5)",
-        "label": "Continual · Tweak-One γ=5 (moderate label shift)",
-        "mode": "continual",
-        "reset_policy": "never",
-        "sampling": "Tweak-One (γ=5)",
-        "definition": "One 'hot' class per corruption appears γ× more often than other classes — a single dominant class per phase, rotated across corruptions.",
-        "stream_order": "Hot class rotates per corruption (per the YAML's `tweak_one_hot_classes` mapping).",
-        "batch_distribution": "One class over-represented by 5×; other classes uniform.",
-        "reset": "Adapter state persists.",
-        "originating": "Niu et al., SAR (ICLR 2023) — 'tweak one' label-shift evaluation isolating single-class oversampling.",
-        "use_when": "Tests sensitivity to label shift without the full chaos of Dirichlet sampling.",
-    },
-    {
-        "key": "continual_twk10",
-        "shift": "Continual / Tweak One (γ=10)",
-        "label": "Continual · Tweak-One γ=10 (strong label shift)",
-        "mode": "continual",
-        "reset_policy": "never",
-        "sampling": "Tweak-One (γ=10)",
-        "definition": "Stronger variant: hot class appears 10× more often.",
-        "stream_order": "Same as γ=5.",
-        "batch_distribution": "Severe class imbalance (90%+ batches from one class).",
-        "reset": "Adapter state persists.",
-        "originating": "Niu et al., SAR (ICLR 2023) — the most aggressive tweak-one variant.",
-        "use_when": "Pushes label-shift further; many entropy-min baselines collapse here.",
-    },
-]
 
 
 def dataset_label(hf_repo: str) -> str:
@@ -344,40 +146,25 @@ def normalize(payload: dict[str, Any], path: Path) -> dict[str, Any] | None:
 
     task = (payload.get("adapter_task_type") or benchmark.get("task_type")
             or "classification")
-    metric_key, metric_label, lower_wins = TASK_METRIC.get(
-        task, TASK_METRIC["classification"])
+    metric_key = TASK_METRIC.get(task, TASK_METRIC["classification"])[0]
 
     return {
         "method": method,
         "task": task,
-        # Unified ranking metric: `score` is the value of the task's primary
-        # metric (error / mIoU / mAP); `lower_wins` tells the board which way to
-        # rank. `metric` is the column label. Per-task secondary metrics are
-        # kept too so tooltips/exports can show them.
+        # Unified ranking metric: `score` carries the task's primary metric
+        # value (error / mIoU / mAP). Ranking direction and column label are
+        # derived in the frontend from `task` (taskLowerWins/taskMetricLabel).
         "score": metrics.get(metric_key),
-        "metric": metric_label,
-        "lower_wins": lower_wins,
         "dataset": dataset,
         "shift": shift,
-        "mode": mode,
-        "sampling": sampling.get("type") or "uniform",
-        "reset": protocol.get("reset_policy") or "—",
-        "batch_size": protocol.get("batch_size"),
         "source": source_model.get("name") or "—",
         "seed": seed,
-        "error": metrics.get("error"),
-        "accuracy": metrics.get("accuracy"),
-        "miou": metrics.get("miou"),
-        "map": metrics.get("map"),
-        "map_50": metrics.get("map_50"),
         "samples_per_s": samples_per_s,
         "adapter_s": adapter_s,
         "peak_gpu_mb": peak_gpu_mb,
         "optimizer_params": parameters.get("optimizer"),
-        "total_params": parameters.get("total"),
         "per_stream": {
-            stream: {"score": (s or {}).get(metric_key),
-                     "samples": (s or {}).get("samples")}
+            stream: {"score": (s or {}).get(metric_key)}
             for stream, s in per_stream.items()
         },
     }
@@ -430,20 +217,10 @@ def main():
         seen.add(key)
         records.append(rec)
 
-    methods_catalog = {
-        slug: {**info, **PAPER_META.get(slug, {})}
-        for slug, info in METHODS_CATALOG.items()
-    }
+    methods_catalog = {slug: {"full": info["full"]} for slug, info in METHODS_CATALOG.items()}
 
     payload = {
-        "meta": {
-            "generated_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
-            "n_records": len(records),
-            "target_datasets_by_task": TARGET_DATASETS_BY_TASK,
-        },
         "methods": methods_catalog,
-        "designed_settings": DESIGNED_SETTINGS,
-        "protocols": PROTOCOLS_GLOSSARY,
         "papers": build_paper_list(),
         "records": records,
     }
